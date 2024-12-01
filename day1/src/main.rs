@@ -1,4 +1,13 @@
+use std::collections::HashMap;
+
 fn main() {
+    part1();
+    part2();
+}
+
+fn part1() {
+    println!("Part 1");
+
     let mut result = 0;
 
     let (mut left, mut right) = parse_input(&get_input());
@@ -10,6 +19,30 @@ fn main() {
         let diff = (left[i] - right[i]).abs();
 
         result += diff;
+    }
+
+    println!("{}", result);
+}
+
+fn part2() {
+    println!("Part 2");
+
+    let mut result = 0;
+
+    let (left, right) = parse_input(&get_input());
+
+    let mut map: HashMap<i32, i32> = HashMap::new();
+
+    for right_key in right {
+        map.entry(right_key)
+            .and_modify(|count| *count += 1)
+            .or_insert(1);
+    }
+
+    for left_key in left {
+        if map.contains_key(&left_key) {
+            result += left_key * map.get(&left_key).unwrap();
+        }
     }
 
     println!("{}", result);
@@ -29,6 +62,15 @@ fn parse_input(input: &str) -> (Vec<i32>, Vec<i32>) {
     }
 
     (left, right)
+}
+
+fn _get_sample_input() -> &'static str {
+    "3   4
+4   3
+2   5
+1   3
+3   9
+3   3"
 }
 
 fn get_input() -> &'static str {
