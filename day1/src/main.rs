@@ -72,7 +72,7 @@ fn parse_input(input: &str) -> (Vec<i32>, Vec<i32>) {
     let mut right = vec![];
 
     // for each line of input
-    for line in input.split('\n') {
+    for line in input.lines() {
         // split into a left and a right part
         let parts: Vec<_> = line.split("   ").collect();
 
