@@ -57,34 +57,38 @@ fn report_is_safe2(report: &Vec<i32>) -> bool {
 
 fn report_is_safe_inner(report: &[i32], increasing: bool, skipped: bool) -> bool {
     for i in 1..report.len() {
-        let (smaller, larger) = if increasing {
-            (report[i - 1], report[i])
-        } else {
-            (report[i], report[i - 1])
-        };
-
-        if larger < smaller + 1 || larger > smaller + 3 {
+        if !levels_are_safe(report[i - 1], report[i], increasing) {
             if skipped {
                 return false;
             } else {
-                // try removing current level
-                let mut copy = report.to_vec();
-                copy.remove(i);
-
-                if report_is_safe_inner(&copy, increasing, true) {
+                // try skipping current level
+                if i + 1 == report.len() {
                     return true;
                 }
 
-                // try removing previous level
-                let mut copy = report.to_vec();
-                copy.remove(i - 1);
+                if levels_are_safe(report[i - 1], report[i + 1], increasing)
+                    && report_is_safe_inner(&report[i + 1..], increasing, true)
+                {
+                    return true;
+                }
 
-                return report_is_safe_inner(&copy, increasing, true);
+                // try skipping previous level
+                if i == 1 || levels_are_safe(report[i - 2], report[i], increasing) {
+                    return report_is_safe_inner(&report[i..], increasing, true);
+                }
+
+                return false;
             }
         }
     }
 
     true
+}
+
+fn levels_are_safe(a: i32, b: i32, increasing: bool) -> bool {
+    let (smaller, larger) = if increasing { (a, b) } else { (b, a) };
+
+    larger >= smaller + 1 && larger <= smaller + 3
 }
 
 fn parse_input(input: &str) -> Vec<Vec<i32>> {
@@ -103,4 +107,16 @@ fn parse_input(input: &str) -> Vec<Vec<i32>> {
     }
 
     reports
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn report_is_safe2_regression() {
+        let report = vec![46, 47, 45, 48, 51, 52, 52];
+
+        assert_eq!(report_is_safe2(&report), false);
+    }
 }
