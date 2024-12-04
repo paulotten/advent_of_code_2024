@@ -4,16 +4,14 @@ use input::*;
 
 fn main() {
     part1();
+    part2();
 }
 
 fn part1() {
     println!("Part 1");
 
     let input = get_input();
-    let lines = input
-        .lines()
-        .map(|line| line.chars().collect::<Vec<_>>())
-        .collect::<Vec<_>>();
+    let lines = parse_input(input);
 
     let mut result = 0;
 
@@ -102,4 +100,37 @@ fn part1() {
 
 fn is_xmas(x: char, m: char, a: char, s: char) -> bool {
     x == 'X' && m == 'M' && a == 'A' && s == 'S'
+}
+
+fn part2() {
+    println!("Part 2");
+
+    let input = get_input();
+    let lines = parse_input(input);
+
+    let mut result = 0;
+
+    for y in 1..lines.len() - 1 {
+        for x in 1..lines[0].len() - 1 {
+            if lines[y][x] == 'A' {
+                if is_x_mas(lines[y-1][x-1], lines[y-1][x+1], lines[y+1][x-1], lines[y+1][x+1]) {
+                    result += 1;
+                }
+            }
+        }
+    }
+
+    println!("{result}");
+}
+
+fn parse_input(input: &str) -> Vec<Vec<char>> {
+    input
+        .lines()
+        .map(|line| line.chars().collect::<Vec<_>>())
+        .collect::<Vec<_>>()
+}
+
+fn is_x_mas(a1: char, b1: char, b2: char, a2: char) -> bool {
+    ((a1 == 'M' && a2 == 'S') || (a1 == 'S' && a2 == 'M'))
+        && ((b1 == 'M' && b2 == 'S') || (b1 == 'S' && b2 == 'M'))
 }
