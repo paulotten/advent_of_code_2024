@@ -36,7 +36,8 @@ fn part2() {
     } = get_map_info(input);
 
     // limit possible obstructions to positions the guard would normally walk
-    let mut possible_obstructions = get_walked_positions(&guard_pos, &guard_dir, &max, &obstructions);
+    let mut possible_obstructions =
+        get_walked_positions(&guard_pos, &guard_dir, &max, &obstructions);
     // "The new obstruction can't be placed at the guard's starting position"
     possible_obstructions.remove(&guard_pos);
 
@@ -55,7 +56,12 @@ fn part2() {
     println!("{count_obstructions}",);
 }
 
-fn get_walked_positions(guard_pos: &Position, guard_dir: &Direction, max: &Position, obstructions: &HashSet<Position>) -> HashSet<Position> {
+fn get_walked_positions(
+    guard_pos: &Position,
+    guard_dir: &Direction,
+    max: &Position,
+    obstructions: &HashSet<Position>,
+) -> HashSet<Position> {
     let mut walked: HashSet<Position> = HashSet::new();
     let mut guard_dir = guard_dir.clone();
     let mut guard_pos = guard_pos.clone();
@@ -110,7 +116,12 @@ fn get_walked_positions(guard_pos: &Position, guard_dir: &Direction, max: &Posit
     walked
 }
 
-fn is_looped(guard_pos: &Position, guard_dir: &Direction, max: &Position, obstructions: &HashSet<Position>) -> bool {
+fn is_looped(
+    guard_pos: &Position,
+    guard_dir: &Direction,
+    max: &Position,
+    obstructions: &HashSet<Position>,
+) -> bool {
     let mut walked: HashSet<PositionAndDirection> = HashSet::new();
     let mut guard_dir = guard_dir.clone();
     let mut guard_pos = guard_pos.clone();
