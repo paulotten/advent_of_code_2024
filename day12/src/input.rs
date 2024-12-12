@@ -12,11 +12,28 @@ MMMISSJEEE"
 }
 
 pub fn _get_sample_input2() -> &'static str {
+    "AAAA
+BBCD
+BBCC
+EEEC"
+}
+
+#[allow(non_snake_case)]
+pub fn _get_sample_inputXO() -> &'static str {
     "OOOOO
 OXOXO
 OOOOO
 OXOXO
 OOOOO"
+}
+
+#[allow(non_snake_case)]
+pub fn _get_sample_inputE() -> &'static str {
+    "EEEEE
+EXXXX
+EEEEE
+EXXXX
+EEEEE"
 }
 
 pub fn get_input() -> &'static str {
