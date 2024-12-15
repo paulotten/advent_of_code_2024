@@ -4,6 +4,7 @@ use input::*;
 
 fn main() {
     part1();
+    part2();
 }
 
 fn part1() {
@@ -36,10 +37,49 @@ fn part1() {
     println!("score: {}", get_score(&warehouse));
 }
 
+fn part2() {
+    println!("Part 2");
+
+    let input = _get_sample_input_large();
+    //let input = get_input();
+    let (warehouse, mut robot, moves) = parse_input(input);
+
+    let mut warehouse = widen_warehouse(&warehouse);
+    robot.x *= 2;
+
+    println!("Initial state:");
+    _print_warehouse2(&warehouse, &robot);
+
+    for m in moves.chars() {
+        println!("Move {m}:");
+        match m {
+            '<' => try_left2(&mut warehouse, &mut robot),
+            '>' => try_right2(&mut warehouse, &mut robot),
+            '^' => try_up2(&mut warehouse, &mut robot),
+            'v' => try_down2(&mut warehouse, &mut robot),
+            _ => panic!("Unsupported move: {m}"),
+        };
+        _print_warehouse2(&warehouse, &robot);
+    }
+
+    println!("Final state:");
+    _print_warehouse2(&warehouse, &robot);
+
+    //println!("score: {}", get_score2(&warehouse));
+}
+
 #[derive(Debug, PartialEq)]
 enum Tile {
     Wall,
     Box,
+    Empty,
+}
+
+#[derive(Debug, PartialEq, Copy, Clone)]
+enum Tile2 {
+    Wall,
+    BoxLeft,
+    BoxRight,
     Empty,
 }
 
@@ -111,6 +151,30 @@ fn try_left(warehouse: &mut Vec<Vec<Tile>>, robot: &mut Position) {
     }
 }
 
+fn try_left2(warehouse: &mut Vec<Vec<Tile2>>, robot: &mut Position) {
+    let mut x = robot.x - 1;
+    let y = robot.y;
+
+    while x >= 0 {
+        match warehouse[y as usize][x as usize] {
+            Tile2::Wall => return,
+            Tile2::BoxLeft | Tile2::BoxRight => {}
+            Tile2::Empty => {
+                robot.x -= 1;
+
+                // push boxes
+                for i in x..=robot.x {
+                    warehouse[y as usize][i as usize] = warehouse[y as usize][(i+1) as usize];
+                }
+
+                return;
+            }
+        }
+
+        x -= 1;
+    }
+}
+
 fn try_right(warehouse: &mut Vec<Vec<Tile>>, robot: &mut Position) {
     let mut x = robot.x + 1;
     let y = robot.y;
@@ -126,6 +190,30 @@ fn try_right(warehouse: &mut Vec<Vec<Tile>>, robot: &mut Position) {
                 if warehouse[robot.y as usize][robot.x as usize] == Tile::Box {
                     warehouse[y as usize][x as usize] = Tile::Box;
                     warehouse[robot.y as usize][robot.x as usize] = Tile::Empty;
+                }
+
+                return;
+            }
+        }
+
+        x += 1;
+    }
+}
+
+fn try_right2(warehouse: &mut Vec<Vec<Tile2>>, robot: &mut Position) {
+    let mut x = robot.x + 1;
+    let y = robot.y;
+
+    while (x as usize) < warehouse[y as usize].len() {
+        match warehouse[y as usize][x as usize] {
+            Tile2::Wall => return,
+            Tile2::BoxLeft | Tile2::BoxRight => {}
+            Tile2::Empty => {
+                robot.x += 1;
+
+                // push boxes
+                for i in (robot.x..=x).rev() {
+                    warehouse[y as usize][i as usize] = warehouse[y as usize][(i-1) as usize];
                 }
 
                 return;
@@ -161,6 +249,28 @@ fn try_up(warehouse: &mut Vec<Vec<Tile>>, robot: &mut Position) {
     }
 }
 
+fn try_up2(warehouse: &mut Vec<Vec<Tile2>>, robot: &mut Position) {
+    let x = robot.x;
+    let mut y = robot.y - 1;
+
+    while y >= 0 {
+        match warehouse[y as usize][x as usize] {
+            Tile2::Wall => return,
+            Tile2::BoxLeft | Tile2::BoxRight => { todo!() }
+            Tile2::Empty => {
+                robot.y -= 1;
+
+                // push boxes
+                // TODO
+
+                return;
+            }
+        }
+
+        y -= 1;
+    }
+}
+
 fn try_down(warehouse: &mut Vec<Vec<Tile>>, robot: &mut Position) {
     let x = robot.x;
     let mut y = robot.y + 1;
@@ -177,6 +287,29 @@ fn try_down(warehouse: &mut Vec<Vec<Tile>>, robot: &mut Position) {
                     warehouse[y as usize][x as usize] = Tile::Box;
                     warehouse[robot.y as usize][robot.x as usize] = Tile::Empty;
                 }
+
+                return;
+            }
+        }
+
+        y += 1;
+    }
+}
+
+
+fn try_down2(warehouse: &mut Vec<Vec<Tile2>>, robot: &mut Position) {
+    let x = robot.x;
+    let mut y = robot.y + 1;
+
+    while (y as usize) < warehouse.len() {
+        match warehouse[y as usize][x as usize] {
+            Tile2::Wall => return,
+            Tile2::BoxLeft | Tile2::BoxRight => { todo!() }
+            Tile2::Empty => {
+                robot.y += 1;
+
+                // push boxes
+                // TODO
 
                 return;
             }
@@ -208,6 +341,60 @@ fn _print_warehouse(warehouse: &Vec<Vec<Tile>>, robot: &Position) {
         y += 1;
     }
     println!();
+}
+
+fn _print_warehouse2(warehouse: &Vec<Vec<Tile2>>, robot: &Position) {
+    let mut y = 0;
+    for row in warehouse {
+        let mut x = 0;
+        for tile in row {
+            match tile {
+                Tile2::Wall => print!("#"),
+                Tile2::BoxLeft => print!("["),
+                Tile2::BoxRight => print!("]"),
+                Tile2::Empty => {
+                    if robot.x == x && robot.y == y {
+                        print!("@");
+                    } else {
+                        print!(".");
+                    }
+                },
+            }
+            x += 1;
+        }
+        println!();
+        y += 1;
+    }
+    println!();
+}
+
+fn widen_warehouse(warehouse: &Vec<Vec<Tile>>) -> Vec<Vec<Tile2>> {
+    let mut wide = vec![];
+
+    for row in warehouse {
+        let mut wide_row = vec![];
+
+        for tile in row {
+            match tile {
+                Tile::Wall => {
+                    wide_row.push(Tile2::Wall);
+                    wide_row.push(Tile2::Wall);
+                },
+                Tile::Box => {
+                    wide_row.push(Tile2::BoxLeft);
+                    wide_row.push(Tile2::BoxRight);
+                },
+                Tile::Empty => {
+                    wide_row.push(Tile2::Empty);
+                    wide_row.push(Tile2::Empty);
+                },
+            }
+        }
+
+        wide.push(wide_row);
+    }
+
+    wide
 }
 
 fn get_score(warehouse: &Vec<Vec<Tile>>) -> i32 {
