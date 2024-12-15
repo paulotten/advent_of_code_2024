@@ -1,5 +1,7 @@
 mod input;
 
+use std::collections::{BTreeSet, HashMap};
+
 use input::*;
 
 fn main() {
@@ -40,18 +42,19 @@ fn part1() {
 fn part2() {
     println!("Part 2");
 
-    let input = _get_sample_input_large();
-    //let input = get_input();
+    //let input = &_get_sample_input2();
+    //let input = _get_sample_input_large();
+    let input = get_input();
     let (warehouse, mut robot, moves) = parse_input(input);
 
     let mut warehouse = widen_warehouse(&warehouse);
     robot.x *= 2;
 
-    println!("Initial state:");
-    _print_warehouse2(&warehouse, &robot);
+    //println!("Initial state:");
+    //_print_warehouse2(&warehouse, &robot);
 
     for m in moves.chars() {
-        println!("Move {m}:");
+        //println!("Move {m}:");
         match m {
             '<' => try_left2(&mut warehouse, &mut robot),
             '>' => try_right2(&mut warehouse, &mut robot),
@@ -59,13 +62,13 @@ fn part2() {
             'v' => try_down2(&mut warehouse, &mut robot),
             _ => panic!("Unsupported move: {m}"),
         };
-        _print_warehouse2(&warehouse, &robot);
+        //_print_warehouse2(&warehouse, &robot);
     }
 
-    println!("Final state:");
-    _print_warehouse2(&warehouse, &robot);
+    //println!("Final state:");
+    //_print_warehouse2(&warehouse, &robot);
 
-    //println!("score: {}", get_score2(&warehouse));
+    println!("score: {}", get_score2(&warehouse));
 }
 
 #[derive(Debug, PartialEq)]
@@ -250,21 +253,55 @@ fn try_up(warehouse: &mut Vec<Vec<Tile>>, robot: &mut Position) {
 }
 
 fn try_up2(warehouse: &mut Vec<Vec<Tile2>>, robot: &mut Position) {
-    let x = robot.x;
+    let mut x_min = robot.x;
+    let mut x_max = robot.x;
     let mut y = robot.y - 1;
 
+    let mut blocks_pushing: HashMap<i32 /*y*/, BTreeSet<i32 /*x*/>> = HashMap::new();
+
     while y >= 0 {
-        match warehouse[y as usize][x as usize] {
-            Tile2::Wall => return,
-            Tile2::BoxLeft | Tile2::BoxRight => { todo!() }
-            Tile2::Empty => {
-                robot.y -= 1;
+        let mut set = BTreeSet::new();
 
-                // push boxes
-                // TODO
-
-                return;
+        for x in x_min..=x_max {
+            match warehouse[y as usize][x as usize] {
+                Tile2::Wall => return,
+                Tile2::BoxLeft => {
+                    set.insert(x);
+                    set.insert(x+1);
+                }
+                Tile2::BoxRight => {
+                    set.insert(x);
+                    set.insert(x-1);
+                }
+                Tile2::Empty => {}
             }
+        }
+
+        if set.is_empty() {
+            robot.y -= 1;
+
+            // push boxes
+            if !blocks_pushing.is_empty() {
+                //println!("{blocks_pushing:?}");
+
+                for y in y+1..=robot.y {
+                    //println!("{y}");
+                    //println!("{:?}", blocks_pushing.get(&y).unwrap());
+
+                    for x in blocks_pushing.get(&y).unwrap() {
+                        let x = *x;
+                        warehouse[y as usize -1][x as usize] = warehouse[y as usize][x as usize];
+                        warehouse[y as usize][x as usize] = Tile2::Empty;
+                    }
+                }
+            }
+
+            return;
+        } else {
+            x_min = *set.first().unwrap();
+            x_max = *set.last().unwrap();
+
+            blocks_pushing.insert(y, set);
         }
 
         y -= 1;
@@ -298,21 +335,55 @@ fn try_down(warehouse: &mut Vec<Vec<Tile>>, robot: &mut Position) {
 
 
 fn try_down2(warehouse: &mut Vec<Vec<Tile2>>, robot: &mut Position) {
-    let x = robot.x;
+    let mut x_min = robot.x;
+    let mut x_max = robot.x;
     let mut y = robot.y + 1;
 
+    let mut blocks_pushing: HashMap<i32 /*y*/, BTreeSet<i32 /*x*/>> = HashMap::new();
+
     while (y as usize) < warehouse.len() {
-        match warehouse[y as usize][x as usize] {
-            Tile2::Wall => return,
-            Tile2::BoxLeft | Tile2::BoxRight => { todo!() }
-            Tile2::Empty => {
-                robot.y += 1;
+        let mut set = BTreeSet::new();
 
-                // push boxes
-                // TODO
-
-                return;
+        for x in x_min..=x_max {
+            match warehouse[y as usize][x as usize] {
+                Tile2::Wall => return,
+                Tile2::BoxLeft => {
+                    set.insert(x);
+                    set.insert(x+1);
+                }
+                Tile2::BoxRight => {
+                    set.insert(x);
+                    set.insert(x-1);
+                }
+                Tile2::Empty => {}
             }
+        }
+
+        if set.is_empty() {
+            robot.y += 1;
+
+            // push boxes
+            if !blocks_pushing.is_empty() {
+                //println!("{blocks_pushing:?}");
+
+                for y in (robot.y..=y-1).rev() {
+                    //println!("{y}");
+                    //println!("{:?}", blocks_pushing.get(&y).unwrap());
+
+                    for x in blocks_pushing.get(&y).unwrap() {
+                        let x = *x;
+                        warehouse[y as usize +1][x as usize] = warehouse[y as usize][x as usize];
+                        warehouse[y as usize][x as usize] = Tile2::Empty;
+                    }
+                }
+            }
+
+            return;
+        } else {
+            x_min = *set.first().unwrap();
+            x_max = *set.last().unwrap();
+
+            blocks_pushing.insert(y, set);
         }
 
         y += 1;
@@ -405,6 +476,25 @@ fn get_score(warehouse: &Vec<Vec<Tile>>) -> i32 {
         let mut x = 0;
         for tile in row {
             if *tile == Tile::Box {
+                sum += y*100 + x;
+            }
+
+            x += 1;
+        }
+        y += 1;
+    }
+
+    sum
+}
+
+fn get_score2(warehouse: &Vec<Vec<Tile2>>) -> i32 {
+    let mut sum = 0;
+
+    let mut y = 0;
+    for row in warehouse {
+        let mut x = 0;
+        for tile in row {
+            if *tile == Tile2::BoxLeft {
                 sum += y*100 + x;
             }
 
